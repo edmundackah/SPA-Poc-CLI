@@ -1,22 +1,24 @@
 package com.example.cli.s3.Service;
 
-import com.example.cli.s3.context.TenantContext;
-import com.example.cli.s3.enums.EnvironmentEnums;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
+import java.io.File;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -42,6 +44,30 @@ public class S3Service {
                 .forcePathStyle(true)
                 .credentialsProvider(credentialsProvider)
                 .build();
+    }
+
+    public void putObjects(String buildPath, String bucketName, String prefix) {
+        File directory = new File(buildPath);
+        File[] files = directory.listFiles();
+
+        if (files != null) {
+            for (File file : files) {
+
+                Map<String, String> metadata = new HashMap<>();
+                metadata.put("x-amz-meta-myVal", "test");
+
+                String objectKey = StringUtils.join(prefix, file.getName());
+
+                PutObjectRequest request = PutObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(objectKey)
+                        .metadata(metadata)
+                        .build();
+
+                s3Client.putObject(request, RequestBody.fromFile(file));
+                log.debug("Uploaded: {}", objectKey);
+            }
+        }
     }
 
     public String listBucketContents(String bucketName) {
