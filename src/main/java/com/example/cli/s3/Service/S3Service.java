@@ -16,8 +16,6 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
-import software.amazon.awssdk.transfer.s3.S3TransferManager;
-import software.amazon.awssdk.transfer.s3.model.Upload;
 
 import java.io.File;
 import java.net.URI;
@@ -50,7 +48,7 @@ public class S3Service {
                 .build();
     }
 
-    public void putObjects(String buildPath, String bucketName, String prefix) {
+    public void putObjects(String buildPath, String bucketName, String prefix) throws SdkClientException {
         File directory = new File(buildPath);
         File[] files = directory.listFiles();
 
@@ -74,7 +72,7 @@ public class S3Service {
         }
     }
 
-    public String listBucketContents(String bucketName) {
+    public String listBucketContents(String bucketName) throws SdkClientException {
         log.info("Using bucket {}", bucketName);
 
         ListObjectsRequest request = ListObjectsRequest.builder()
@@ -87,7 +85,7 @@ public class S3Service {
                 .collect(Collectors.joining("\n"));
     }
 
-    public String verifyObjectsExist(String bucketName, String prefix) {
+    public String verifyObjectsExist(String bucketName, String prefix) throws SdkClientException {
         // Create request to list objects with the specified prefix
         ListObjectsRequest request = ListObjectsRequest.builder()
                 .bucket(bucketName)
@@ -111,7 +109,7 @@ public class S3Service {
         ));
     }
 
-    public void createBucket(String name) {
+    public void createBucket(String name) throws SdkClientException {
         CreateBucketRequest bucketRequest = CreateBucketRequest.builder()
                 .bucket(name)
                 .build();

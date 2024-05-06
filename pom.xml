@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.2.3</version>
+		<version>3.2.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
@@ -18,7 +18,7 @@
 
 	<properties>
 		<java.version>17</java.version>
-		<spring-shell.version>3.2.3</spring-shell.version>
+		<spring-shell.version>3.2.4</spring-shell.version>
 	</properties>
 
 	<dependencies>
@@ -40,11 +40,6 @@
 			<groupId>com.github.freva</groupId>
 			<artifactId>ascii-table</artifactId>
 			<version>1.8.0</version>
-		</dependency>
-		<dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>s3-transfer-manager</artifactId>
-			<version>2.25.34</version>
 		</dependency>
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>

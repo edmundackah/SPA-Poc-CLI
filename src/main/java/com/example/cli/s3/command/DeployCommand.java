@@ -1,18 +1,15 @@
 package com.example.cli.s3.command;
 
 import com.example.cli.s3.Service.S3Service;
+import com.example.cli.s3.constants.HelpMessages;
 import com.example.cli.s3.context.TenantContext;
 import com.example.cli.s3.enums.EnvironmentEnums;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.standard.ShellCommandGroup;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-
-import java.io.File;
 
 @Slf4j
 @ShellComponent
@@ -29,9 +26,9 @@ public class DeployCommand {
     }
 
     @ShellMethod(key= "deploy-snapshot")
-    public String deploySnapshot(@ShellOption(defaultValue = "dev") String env,
-                                 @ShellOption String buildPath,
-                                 @ShellOption String prefix) {
+    public String deploySnapshot(@ShellOption(help = HelpMessages.ENV) String env,
+                                 @ShellOption(help = HelpMessages.BUILD_PATH) String buildPath,
+                                 @ShellOption(help = HelpMessages.PREFIX) String prefix) {
 
         String bucketName = tenantContext.getBucketName(EnvironmentEnums.fromString(env));
         s3Service.putObjects(buildPath, bucketName, prefix);
@@ -39,7 +36,8 @@ public class DeployCommand {
     }
 
     @ShellMethod(key= "verify")
-    public String verify(@ShellOption(defaultValue = "dev") String env, @ShellOption String prefix) {
+    public String verify(@ShellOption(help = HelpMessages.ENV) String env,
+                         @ShellOption(help = HelpMessages.PREFIX) String prefix) {
         String bucketName = tenantContext.getBucketName(EnvironmentEnums.fromString(env));
         return s3Service.verifyObjectsExist(bucketName, prefix);
     }
