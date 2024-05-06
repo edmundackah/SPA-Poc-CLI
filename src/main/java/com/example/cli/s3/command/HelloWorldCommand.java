@@ -38,6 +38,7 @@ public class HelloWorldCommand {
 
     @ShellMethod(key = "create-bucket")
     public String createBucket(@ShellOption String bucketName) {
-        return s3Service.createBucket(bucketName);
+        s3Service.createBucket(bucketName);
+        return "Bucket created successfully!";
     }
 }

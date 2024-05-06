@@ -1,5 +1,9 @@
 package com.example.cli.s3.Service;
 
+import com.example.cli.s3.models.TableRow;
+import com.example.cli.s3.utils.Utils;
+import com.github.freva.asciitable.AsciiTable;
+import com.github.freva.asciitable.Column;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,18 +11,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
-import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.transfer.s3.S3TransferManager;
+import software.amazon.awssdk.transfer.s3.model.Upload;
 
 import java.io.File;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -33,7 +36,8 @@ public class S3Service {
                     @Value("${s3.secretAccessKey}") String secretAccessKey) {
 
         AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKeyId, secretAccessKey);
-        StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(credentials);
+        StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider
+                .create(credentials);
 
         log.info("Connecting with url {}", endpointUrl);
         log.info("Connecting with region {}", Region.of(awsRegion));
@@ -83,12 +87,35 @@ public class S3Service {
                 .collect(Collectors.joining("\n"));
     }
 
-    public String createBucket(String name) {
+    public String verifyObjectsExist(String bucketName, String prefix) {
+        // Create request to list objects with the specified prefix
+        ListObjectsRequest request = ListObjectsRequest.builder()
+                .bucket(bucketName)
+                .prefix(prefix)
+                .build();
+
+        ListObjectsResponse response = s3Client.listObjects(request);
+
+        // Data for the ASCII table
+        List<TableRow> rows = new ArrayList<>();
+
+        for (S3Object object : response.contents()) {
+            rows.add(new TableRow(object.key(), Utils.getUKTimestamp(object.lastModified()), object.size().toString()));
+        }
+
+        // Create and print the ASCII table
+        return AsciiTable.getTable(rows, Arrays.asList(
+                new Column().header("Key").with(TableRow::getKey),
+                new Column().header("Date Modified").with(TableRow::getDateModified),
+                new Column().header("Size (Bytes)").with(TableRow::getSize)
+        ));
+    }
+
+    public void createBucket(String name) {
         CreateBucketRequest bucketRequest = CreateBucketRequest.builder()
                 .bucket(name)
                 .build();
 
         s3Client.createBucket(bucketRequest);
-        return "Bucket created successfully!";
     }
 }

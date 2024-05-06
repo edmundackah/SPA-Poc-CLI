@@ -37,4 +37,10 @@ public class DeployCommand {
         s3Service.putObjects(buildPath, bucketName, prefix);
         return "Upload Successful";
     }
+
+    @ShellMethod(key= "verify")
+    public String verify(@ShellOption(defaultValue = "dev") String env, @ShellOption String prefix) {
+        String bucketName = tenantContext.getBucketName(EnvironmentEnums.fromString(env));
+        return s3Service.verifyObjectsExist(bucketName, prefix);
+    }
 }
