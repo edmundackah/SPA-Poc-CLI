@@ -11,6 +11,8 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 
+import java.io.IOException;
+
 @Slf4j
 @ShellComponent
 @ShellCommandGroup("Deploy ECS S3")
@@ -28,11 +30,10 @@ public class DeployCommand {
     @ShellMethod(key= "deploy-snapshot")
     public String deploySnapshot(@ShellOption(help = HelpMessages.ENV) String env,
                                  @ShellOption(help = HelpMessages.BUILD_PATH) String buildPath,
-                                 @ShellOption(help = HelpMessages.PREFIX) String prefix) {
+                                 @ShellOption(help = HelpMessages.PREFIX) String prefix) throws IOException {
 
         String bucketName = tenantContext.getBucketName(EnvironmentEnums.fromString(env));
-        s3Service.putObjects(buildPath, bucketName, prefix);
-        return "Upload Successful";
+        return s3Service.putObjects(buildPath, bucketName, prefix);
     }
 
     @ShellMethod(key= "verify")

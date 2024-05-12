@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
+import java.io.IOException;
 import java.net.ConnectException;
 
 
@@ -22,13 +23,12 @@ public class GlobalExceptionHandler implements CommandExceptionResolver {
     @Override
     public CommandHandlingResult resolve(Exception ex) {
 
-
-        if (ex instanceof SdkClientException) {
+        if (ex instanceof IOException) {
+            return CommandHandlingResult.of(ex.getLocalizedMessage(), ExitCodes.FAILURE);
+        } else if (ex instanceof SdkClientException) {
             return CommandHandlingResult.of("An error occurred with S3 Client: " + ex.getLocalizedMessage(), ExitCodes.FAILURE);
         } else if (ex instanceof S3Exception) {
             return CommandHandlingResult.of("S3 Access Error: " + ex.getLocalizedMessage(), ExitCodes.FAILURE);
-        } else if (ex instanceof ConnectException) {
-            return CommandHandlingResult.of("Network connection error occurred: " + ex.getLocalizedMessage(), ExitCodes.FAILURE);
         } else if (ex instanceof IllegalArgumentException) {
             return CommandHandlingResult.of(ex.getLocalizedMessage(), ExitCodes.FAILURE);
         }

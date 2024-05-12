@@ -18,7 +18,9 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,14 +50,14 @@ public class S3Service {
                 .build();
     }
 
-    public void putObjects(String buildPath, String bucketName, String prefix) throws SdkClientException {
-        File folder = new File(buildPath);
-        if (!folder.exists() || !folder.isDirectory()) {
-            throw new IllegalArgumentException("Invalid folder path: " + buildPath);
-        }
+    public String putObjects(String buildPath, String bucketName, String prefix) throws SdkClientException, IOException {
+        File directory = new File(buildPath);
+        File[] files = directory.listFiles();
 
-        for (File file : Objects.requireNonNull(folder.listFiles())) {
-            if (file.isFile()) {
+        if (files == null) {
+            throw new IllegalArgumentException("No objects found at " + directory.getPath());
+        } else {
+            for (File file : files) {
                 String objectKey = StringUtils.join(prefix, file.getName());
 
                 PutObjectRequest request = PutObjectRequest.builder()
@@ -64,8 +66,9 @@ public class S3Service {
                         .build();
 
                 s3Client.putObject(request, RequestBody.fromFile(file));
-                log.info("Uploaded: {}", objectKey);
+                log.debug("Uploaded: {}", objectKey);
             }
+            return "Upload task complete";
         }
     }
 
