@@ -19,7 +19,10 @@ import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.File;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -37,9 +40,6 @@ public class S3Service {
         StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider
                 .create(credentials);
 
-        log.info("Connecting with url {}", endpointUrl);
-        log.info("Connecting with region {}", Region.of(awsRegion));
-
         this.s3Client = S3Client.builder()
                 .endpointOverride(URI.create(endpointUrl))
                 .region(Region.of(awsRegion))// Must be valid AWS Region
@@ -49,25 +49,22 @@ public class S3Service {
     }
 
     public void putObjects(String buildPath, String bucketName, String prefix) throws SdkClientException {
-        File directory = new File(buildPath);
-        File[] files = directory.listFiles();
+        File folder = new File(buildPath);
+        if (!folder.exists() || !folder.isDirectory()) {
+            throw new IllegalArgumentException("Invalid folder path: " + buildPath);
+        }
 
-        if (files != null) {
-            for (File file : files) {
-
-                Map<String, String> metadata = new HashMap<>();
-                metadata.put("x-amz-meta-myVal", "test");
-
+        for (File file : Objects.requireNonNull(folder.listFiles())) {
+            if (file.isFile()) {
                 String objectKey = StringUtils.join(prefix, file.getName());
 
                 PutObjectRequest request = PutObjectRequest.builder()
                         .bucket(bucketName)
                         .key(objectKey)
-                        .metadata(metadata)
                         .build();
 
                 s3Client.putObject(request, RequestBody.fromFile(file));
-                log.debug("Uploaded: {}", objectKey);
+                log.info("Uploaded: {}", objectKey);
             }
         }
     }
