@@ -21,11 +21,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -116,4 +117,28 @@ public class S3Service {
 
         s3Client.createBucket(bucketRequest);
     }
+
+    public void uploadDirectoryToS3(File directory, String bucketName, String prefix) throws IOException {
+
+        try (Stream<Path> paths = Files.walk(directory.toPath())) {
+            paths.filter(Files::isRegularFile)
+                    .forEach(filePath -> uploadFileToS3(s3Client, bucketName, prefix, directory.toPath(), filePath));
+        } catch (IOException e) {
+            log.error(e.getLocalizedMessage());
+        }
+    }
+
+    private void uploadFileToS3(S3Client s3Client, String bucketName, String prefix, Path rootDir, Path filePath) {
+        String key = prefix + "/" + rootDir.relativize(filePath).toString().replace("\\", "/");
+
+        PutObjectRequest putRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .build();
+
+        s3Client.putObject(putRequest, filePath);
+
+        log.info("Uploaded: {} to S3 bucket {} with key {}", filePath, bucketName, key);
+    }
+
 }
