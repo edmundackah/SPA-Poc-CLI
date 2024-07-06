@@ -2,6 +2,9 @@ package com.example.cli.s3.Service;
 
 import com.example.cli.s3.models.TableRow;
 import com.example.cli.s3.utils.Utils;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.github.freva.asciitable.AsciiTable;
 import com.github.freva.asciitable.Column;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +20,11 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -33,11 +38,17 @@ import java.util.stream.Stream;
 public class S3Service {
     private final S3Client s3Client;
 
+    private final ObjectMapper objectMapper;
+
     @Autowired
-    public S3Service(@Value("${s3.region}") String awsRegion,
-                    @Value("${s3.accessKeyId}") String accessKeyId,
-                    @Value("${s3.endpoint.url}") String endpointUrl,
-                    @Value("${s3.secretAccessKey}") String secretAccessKey) {
+    public S3Service(
+            ObjectMapper objectMapper,
+            @Value("${s3.region}") String awsRegion,
+            @Value("${s3.accessKeyId}") String accessKeyId,
+            @Value("${s3.endpoint.url}") String endpointUrl,
+            @Value("${s3.secretAccessKey}") String secretAccessKey) {
+
+        this.objectMapper = objectMapper;
 
         AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKeyId, secretAccessKey);
         StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider
@@ -116,6 +127,41 @@ public class S3Service {
                 .build();
 
         s3Client.createBucket(bucketRequest);
+    }
+
+    public JsonNode getMaintenanceFile(String bucketName) {
+        try {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key("maintenance.json")
+                    .build();
+
+            byte[] content = s3Client.getObjectAsBytes(getObjectRequest).asByteArray();
+            return objectMapper.readTree(new ByteArrayInputStream(content));
+        } catch (S3Exception e) {
+            if (e.statusCode() == 404) {
+                log.info("File maintenance.json does not exist in bucket {}. Creating a new file.", bucketName);
+                return objectMapper.createObjectNode();
+            } else {
+                log.error("Failed to get the file from S3: {}", e.getMessage());
+                throw e;
+            }
+        } catch (IOException e) {
+            log.error("Failed to process the JSON content: {}", e.getMessage());
+            throw new RuntimeException("Failed to process the JSON content", e);
+        }
+    }
+
+    public void saveMaintenanceFile(String bucketName, JsonNode rootNode) {
+        byte[] updatedContent = rootNode.toString().getBytes(StandardCharsets.UTF_8);
+
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key("maintenance.json")
+                .build();
+
+        s3Client.putObject(putObjectRequest, RequestBody.fromBytes(updatedContent));
+        log.info("Successfully updated the maintenance file in bucket: {}", bucketName);
     }
 
     public void uploadDirectoryToS3(File directory, String bucketName, String prefix) throws IOException {
