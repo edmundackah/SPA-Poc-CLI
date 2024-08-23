@@ -4,21 +4,16 @@ import com.example.cli.s3.constants.ExitCodes;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.shell.command.CommandExceptionResolver;
 import org.springframework.shell.command.CommandHandlingResult;
-import org.springframework.shell.command.annotation.ExitCode;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
-import java.net.ConnectException;
 
 
 @Slf4j
 @Component
 public class GlobalExceptionHandler implements CommandExceptionResolver {
-
-    private static final String ANSI_RED = "\\u001B[31m";
-    private static final String ANSI_NO_COLOUR = "\\u001B[0m";
 
     @Override
     public CommandHandlingResult resolve(Exception ex) {

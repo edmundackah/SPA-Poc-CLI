@@ -1,10 +1,10 @@
-package com.example.cli.s3.Service;
+package com.example.cli.s3.service;
 
-import com.example.cli.s3.client.SnowBrokerClient;
 import com.example.cli.s3.enums.FlagState;
+import com.example.cli.s3.enums.TargetServer;
 import com.example.cli.s3.models.MaintenanceFlag;
+import com.example.cli.s3.utils.S3Util;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.freva.asciitable.AsciiTable;
 import com.github.freva.asciitable.Column;
@@ -21,20 +21,11 @@ import java.util.*;
 public class MaintenanceService {
 
     @Autowired
-    private final S3Service s3Service;
+    private final S3Util s3Util;
 
-    @Autowired
-    private final ObjectMapper objectMapper;
-
-    @Autowired
-    private final SnowBrokerClient snowBrokerClient;
-
-
-    public void updateStates(String bucketName, String flags, FlagState state, boolean addIfMissing, String changeRecord) throws RuntimeException {
-
-        snowBrokerClient.validateChangeRecord(bucketName, changeRecord);
-
-        JsonNode rootNode = s3Service.getMaintenanceFile(bucketName);
+    public void updateStates(String bucketName, String flags, FlagState state,
+                             boolean addIfMissing, String changeRecord, TargetServer server) throws RuntimeException {
+        JsonNode rootNode = s3Util.getMaintenanceFile(bucketName, server, changeRecord);
         boolean fileExists = !rootNode.isEmpty();
 
         ObjectNode rootNodeObject = (ObjectNode) rootNode;
@@ -55,17 +46,15 @@ public class MaintenanceService {
             return;
         }
 
-        s3Service.saveMaintenanceFile(bucketName, rootNode);
+        s3Util.saveMaintenanceFile(bucketName, rootNode, server, changeRecord);
 
         if (!fileExists) {
             log.info("Successfully created the maintenance file in bucket: {}", bucketName);
         }
     }
 
-    public String displayStates(String bucketName, String changeRecord) throws RuntimeException {
-        snowBrokerClient.validateChangeRecord(bucketName, changeRecord);
-
-        JsonNode rootNode = s3Service.getMaintenanceFile(bucketName);
+    public String displayStates(String bucketName, String changeRecord, TargetServer server) throws RuntimeException {
+        JsonNode rootNode = s3Util.getMaintenanceFile(bucketName, server, changeRecord);
 
         List<MaintenanceFlag> flags = mapMaintenanceFlags(rootNode);
 
