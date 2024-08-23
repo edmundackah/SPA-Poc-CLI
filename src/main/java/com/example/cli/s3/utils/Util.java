@@ -5,7 +5,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class Utils {
+public class Util {
 
     public static String getUKTimestamp(Instant instant) {
         // Get the ZoneId for the UK (Europe/London)
