@@ -23,8 +23,8 @@ public class MaintenanceCommand {
 
     @ShellMethod(key = "deploy-maintenance")
     public void deployMaintenance(@ShellOption(help = HelpMessages.FLAGS) String flags,
-                                  @ShellOption(help = HelpMessages.BUCKET_NAME) String bucketName,
                                   @ShellOption(help = HelpMessages.FLAG_STATE) FlagState state,
+                                  @ShellOption(help = HelpMessages.BUCKET_NAME) String bucketName,
                                   @ShellOption(help = HelpMessages.TARGET_SERVER) TargetServer targetServer,
                                   @ShellOption(defaultValue = "true", help = HelpMessages.ADD_IF_MISSING) Boolean addIfMissing,
                                   @ShellOption(defaultValue = "", help = HelpMessages.CHANGE_RECORD) String changeRecord) {
