@@ -4,7 +4,7 @@ public interface HelpMessages {
 
     String BUCKET_NAME = "Target env (e.g. dev, staging, prod)";
     String FOLDER_PATH = "Directory containing your static assets (e.g. dist)";
-    String PREFIX = "The route to your SPA (homepage path)";
+    String PREFIX = "The route to your SPA (e.g. 'servicing/customer')";
     String ARTIFACT_URL = "The url to the artifact you want to deploy";
 
     String FLAGS = "Comma-separated list of flags to update.";
@@ -13,6 +13,4 @@ public interface HelpMessages {
 
     String CHANGE_RECORD = "The change record identifier to validate.";
     String TARGET_SERVER = "The target S3 instance (e.g. ECS_S3, ECS_S3_PROD, AWS_S3 & AWS_S3_PROD)";
-
-    String PROD_BUCKET_INVALID_CHANGE_RECORD = "Valid change record required to access PROD buckets";
 }

@@ -15,9 +15,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.exception.SdkClientException;
-import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
-import software.amazon.awssdk.services.s3.model.ListObjectsResponse;
-import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,6 +60,42 @@ public class DeployService {
         ));
     }
 
+    public String remove(String bucketName, String prefix, TargetServer server, String changeRecord) {
+        ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
+                .bucket(bucketName)
+                .prefix(prefix)
+                .build();
+
+        S3Client s3Client = s3ClientFactory.getS3Client(server, changeRecord);
+
+        ListObjectsV2Response listObjectsResponse;
+        do {
+            listObjectsResponse = s3Client.listObjectsV2(listObjectsRequest);
+
+            for (S3Object s3Object : listObjectsResponse.contents()) {
+                if (s3Object.key().startsWith(prefix)) {
+                    DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                            .bucket(bucketName)
+                            .key(s3Object.key())
+                            .build();
+                    s3Client.deleteObject(deleteObjectRequest);
+
+                    log.info("Deleted object: {}", s3Object.key());
+                }
+            }
+
+            listObjectsRequest = ListObjectsV2Request.builder()
+                    .bucket(bucketName)
+                    .prefix(prefix) // Keep the same prefix for subsequent requests
+                    .continuationToken(listObjectsResponse.nextContinuationToken())
+                    .build();
+
+        } while (listObjectsResponse.isTruncated());
+
+        return StringUtils.join("All objects with prefix starting with '",
+                prefix, "' deleted from bucket '", bucketName,"'");
+    }
+
     public String deploySnapshot(String bucketName, String prefix, String folderPath,
                                  TargetServer server, String changeRecord) throws IOException {
         File folder = new File(folderPath);
@@ -70,6 +105,9 @@ public class DeployService {
             return "Invalid folder path or folder is empty.";
         }
 
+        //Remove current objects with matching prefix
+        remove(bucketName, prefix, server, changeRecord);
+
         // Upload the contents of the folder to S3
         s3Util.uploadDirectoryToS3(folder, bucketName, prefix, server, changeRecord);
 
@@ -77,7 +115,7 @@ public class DeployService {
     }
 
     public String deployRelease(String url, String bucketName, String prefix,
-                                TargetServer targetServer, String changeRecord) throws IOException {
+                                TargetServer server, String changeRecord) throws IOException {
         String tarFile = StringUtils.join(UUID.randomUUID().toString(), ".tgz");
 
         // Download the .tgz file
@@ -88,7 +126,11 @@ public class DeployService {
 
         // Upload the contents of the package/build directory to S3
         File buildDir = new File(extractedDir, "package/build");
-        s3Util.uploadDirectoryToS3(buildDir, bucketName, prefix, targetServer, changeRecord);
+
+        //Remove current objects with matching prefix
+        remove(bucketName, prefix, server, changeRecord);
+
+        s3Util.uploadDirectoryToS3(buildDir, bucketName, prefix, server, changeRecord);
 
         // Cleanup
         log.debug("Cleaning up temp files");

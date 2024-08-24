@@ -1,9 +1,8 @@
 package com.example.cli.s3.factory;
 
 import com.example.cli.s3.client.SnowBrokerClient;
-import com.example.cli.s3.constants.HelpMessages;
 import com.example.cli.s3.enums.TargetServer;
-import com.example.cli.s3.response.SnowBrokerValidationResponse;
+import com.example.cli.s3.response.S3CredentialsResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -44,11 +43,8 @@ public class S3ClientFactory {
             case AWS_S3:
                 return S3Client.builder().build();
             case AWS_S3_PROD:
-                SnowBrokerValidationResponse response = snowBrokerClient.validateChangeRecord(changeRecord);
-                if (response.getIsValid()) {
-                    return S3Client.builder().build();
-                }
-                throw new RuntimeException(HelpMessages.PROD_BUCKET_INVALID_CHANGE_RECORD);
+                snowBrokerClient.validateChangeRecord(changeRecord);
+                return S3Client.builder().build();
             case ECS_S3:
                 StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider
                         .create(AwsBasicCredentials.create(accessKeyId, secretAccessKey));
@@ -59,7 +55,7 @@ public class S3ClientFactory {
                         .credentialsProvider(credentialsProvider)
                         .build();
             case ECS_S3_PROD:
-                SnowBrokerValidationResponse res = snowBrokerClient.validateChangeRecord(changeRecord);
+                S3CredentialsResponse res = snowBrokerClient.validateChangeRecord(changeRecord);
                 StaticCredentialsProvider prodCredentials = StaticCredentialsProvider
                         .create(AwsBasicCredentials.create(res.getAccessKeyId(), res.getSecretKey()));
 

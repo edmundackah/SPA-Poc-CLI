@@ -40,10 +40,19 @@ public class DeployCommand {
         return deployService.verifyObjectsExist(bucketName, prefix, targetServer, changeRecord);
     }
 
+    @ShellMethod(key = "remove")
+    public String remove(@ShellOption(help = HelpMessages.PREFIX) String prefix,
+                         @ShellOption(help = HelpMessages.BUCKET_NAME) String bucketName,
+                         @ShellOption(help = HelpMessages.TARGET_SERVER) TargetServer targetServer,
+                         @ShellOption(defaultValue = "", help = HelpMessages.CHANGE_RECORD) String changeRecord) {
+
+        return deployService.remove(bucketName, prefix, targetServer, changeRecord);
+    }
+
     @ShellMethod(key = "deploy-release")
     public String deployRelease(@ShellOption(help = HelpMessages.PREFIX) String prefix,
-                                @ShellOption(help = HelpMessages.BUCKET_NAME) String bucketName,
                                 @ShellOption(help = HelpMessages.ARTIFACT_URL) String url,
+                                @ShellOption(help = HelpMessages.BUCKET_NAME) String bucketName,
                                 @ShellOption(help = HelpMessages.TARGET_SERVER) TargetServer targetServer,
                                 @ShellOption(defaultValue = "", help = HelpMessages.CHANGE_RECORD) String changeRecord) throws IOException {
 

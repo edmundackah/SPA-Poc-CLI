@@ -7,7 +7,7 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @RequiredArgsConstructor
-public class SnowBrokerValidationResponse {
-    private S3CredentialsResponse key;
-    private Boolean isValid;
+public class S3CredentialsResponse {
+    private String secretKey;
+    private String accessKeyId;
 }

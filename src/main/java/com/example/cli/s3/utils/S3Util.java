@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -24,6 +25,9 @@ import java.util.stream.Stream;
 @Slf4j
 @Component
 public class S3Util {
+
+    @Value("${default.object.acl}")
+    private String objectACL;
 
     @Autowired
     private S3ClientFactory s3ClientFactory;
@@ -57,13 +61,18 @@ public class S3Util {
                                     TargetServer server, String changeRecord) {
         byte[] updatedContent = rootNode.toString().getBytes(StandardCharsets.UTF_8);
 
+        RequestBody payload = RequestBody.fromBytes(updatedContent);
+        log.info("Setting maintenance.json contentType to {} and ACL to {}", payload.contentType(), objectACL);
+
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
+                .contentType(payload.contentType())
                 .key("maintenance.json")
+                .acl(objectACL)
                 .build();
 
         s3ClientFactory.getS3Client(server, changeRecord)
-                .putObject(putObjectRequest, RequestBody.fromBytes(updatedContent));
+                .putObject(putObjectRequest, payload);
         log.info("Successfully updated the maintenance file in bucket: {}", bucketName);
     }
 
@@ -82,8 +91,13 @@ public class S3Util {
     private void uploadFileToS3(S3Client s3Client, String bucketName, String prefix, Path rootDir, Path filePath) {
         String key = prefix + "/" + rootDir.relativize(filePath).toString().replace("\\", "/");
 
+        String contentType = Util.getContentType(filePath);
+        log.info("Setting {} ContentType to {} and ACL to {}", filePath.getFileName(), contentType, objectACL);
+
         PutObjectRequest putRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
+                .contentType(contentType)
+                .acl(objectACL)
                 .key(key)
                 .build();
 
