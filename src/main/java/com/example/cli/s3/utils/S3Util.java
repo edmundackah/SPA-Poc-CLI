@@ -62,7 +62,7 @@ public class S3Util {
         byte[] updatedContent = rootNode.toString().getBytes(StandardCharsets.UTF_8);
 
         RequestBody payload = RequestBody.fromBytes(updatedContent);
-        log.info("Setting maintenance.json contentType to {}", payload.contentType());
+        log.info("Setting maintenance.json contentType to {} and ACL to {}", payload.contentType(), objectACL);
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
@@ -92,7 +92,7 @@ public class S3Util {
         String key = prefix + "/" + rootDir.relativize(filePath).toString().replace("\\", "/");
 
         String contentType = Util.getContentType(filePath);
-        log.info("Setting {} ContentType to {}", filePath.getFileName(), contentType);
+        log.info("Setting {} ContentType to {} and ACL to {}", filePath.getFileName(), contentType, objectACL);
 
         PutObjectRequest putRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
