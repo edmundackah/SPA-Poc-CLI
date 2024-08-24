@@ -4,7 +4,7 @@ public interface HelpMessages {
 
     String BUCKET_NAME = "Target env (e.g. dev, staging, prod)";
     String FOLDER_PATH = "Directory containing your static assets (e.g. dist)";
-    String PREFIX = "The route to your SPA (homepage path)";
+    String PREFIX = "The route to your SPA (e.g. 'servicing/customer')";
     String ARTIFACT_URL = "The url to the artifact you want to deploy";
 
     String FLAGS = "Comma-separated list of flags to update.";
