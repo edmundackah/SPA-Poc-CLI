@@ -31,7 +31,7 @@ public class GlobalExceptionHandler implements CommandExceptionResolver {
         // ... more else-if blocks for other custom exceptions ...
 
         else { // Default case for unexpected exceptions
-            log.error("Unexpected error", ex);
+            //log.error("Unexpected error", ex);
             return CommandHandlingResult.of("An unexpected error occurred: " + ex.getLocalizedMessage(), ExitCodes.FAILURE);
         }
     }

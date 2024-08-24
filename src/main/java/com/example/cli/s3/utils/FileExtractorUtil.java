@@ -19,6 +19,8 @@ import java.util.zip.ZipFile;
 public class FileExtractorUtil {
 
     public File downloadFile(String url, String destination) throws IOException {
+        log.info("Downloading {} saving as {}", url, destination);
+
         File file = new File(destination);
         FileUtils.copyURLToFile(new URL(url), file);
         return file;
