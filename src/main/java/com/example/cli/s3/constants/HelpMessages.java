@@ -13,6 +13,4 @@ public interface HelpMessages {
 
     String CHANGE_RECORD = "The change record identifier to validate.";
     String TARGET_SERVER = "The target S3 instance (e.g. ECS_S3, ECS_S3_PROD, AWS_S3 & AWS_S3_PROD)";
-
-    String PROD_BUCKET_INVALID_CHANGE_RECORD = "Valid change record required to access PROD buckets";
 }
