@@ -41,7 +41,9 @@ public class S3ClientFactory {
 
         switch (server) {
             case AWS_S3:
-                return S3Client.builder().build();
+                return S3Client.builder()
+                        .region(Region.of(awsRegion))
+                        .build();
             case AWS_S3_PROD:
                 snowBrokerClient.validateChangeRecord(changeRecord);
                 return S3Client.builder().build();
