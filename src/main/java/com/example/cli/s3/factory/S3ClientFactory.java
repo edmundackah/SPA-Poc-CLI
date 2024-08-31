@@ -22,7 +22,7 @@ import java.net.URI;
 public class S3ClientFactory {
 
     @Value("${ecs.s3.region}")
-    private String awsRegion;
+    private String ecsRegion;
 
     @Value("${ecs.s3.endpoint.url}")
     private String endpointUrl;
@@ -41,9 +41,7 @@ public class S3ClientFactory {
 
         switch (server) {
             case AWS_S3:
-                return S3Client.builder()
-                        .region(Region.of(awsRegion))
-                        .build();
+                return S3Client.builder().build();
             case AWS_S3_PROD:
                 snowBrokerClient.validateChangeRecord(changeRecord);
                 return S3Client.builder().build();
@@ -53,7 +51,7 @@ public class S3ClientFactory {
 
                 return S3Client.builder()
                         .endpointOverride(URI.create(endpointUrl))
-                        .region(Region.of(awsRegion))
+                        .region(Region.of(ecsRegion))
                         .credentialsProvider(credentialsProvider)
                         .build();
             case ECS_S3_PROD:
@@ -63,7 +61,7 @@ public class S3ClientFactory {
 
                 return S3Client.builder()
                         .endpointOverride(URI.create(endpointUrl))
-                        .region(Region.of(awsRegion))
+                        .region(Region.of(ecsRegion))
                         .credentialsProvider(prodCredentials)
                         .build();
             default:

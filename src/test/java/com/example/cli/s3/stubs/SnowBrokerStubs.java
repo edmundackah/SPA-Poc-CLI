@@ -16,5 +16,18 @@ public class SnowBrokerStubs {
                                 "    \"secretKey\": \"PV59ypmisU\"\n" +
                                 "  }\n" +
                                 "}")));
+
+        stubFor(get(urlEqualTo("/incident/INC23434114"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\n" +
+                                "  \"isValid\": \"true\",\n" +
+                                "  \"key\": {\n" +
+                                "    \"accessKeyId\": \"CnIjsDcI\",\n" +
+                                "    \"secretKey\": \"PV59ypmisU\"\n" +
+                                "  }\n" +
+                                "}")));
     }
+
 }

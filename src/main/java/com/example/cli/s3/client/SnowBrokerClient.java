@@ -32,25 +32,28 @@ public class SnowBrokerClient {
         String url = StringUtils.join((changeRecord.startsWith("INC") ? incidentEndpoint : changeEndpoint), changeRecord);
 
         log.info("Calling url: {}", url);
+        HttpResponse<String> res;
 
-        HttpResponse<String> res = Unirest.get(url)
-                .asString();
+        try {
+            res = Unirest.get(url).asString();
+            log.debug("Response: {}", res.getBody());
 
-        log.debug("Response: {}", res.getBody());
-
-        if (res.getStatus() == 200) {
-            try {
-                SnowBrokerValidationResponse body = objectMapper.readValue(res.getBody(), SnowBrokerValidationResponse.class);
-                if (body.getIsValid()) {
-                    return body.getKey();
+            if (res.getStatus() == 200) {
+                try {
+                    SnowBrokerValidationResponse body = objectMapper.readValue(res.getBody(), SnowBrokerValidationResponse.class);
+                    if (body.getIsValid()) {
+                        return body.getKey();
+                    }
+                    throw new SnowBrokerException("Change Record not valid for deployment");
+                } catch (Exception e) {
+                    throw new SnowBrokerException("Error parsing res: " + e.getMessage());
                 }
+            } else if (res.getStatus() == 404) {
                 throw new SnowBrokerException("Change Record not valid for deployment");
-            } catch (Exception e) {
-                throw new SnowBrokerException("Error parsing res: " + e.getMessage());
+            } else {
+                throw new SnowBrokerException("Failed to reach ServiceNow, see logs for details");
             }
-        } else if (res.getStatus() == 404) {
-            throw new SnowBrokerException("Change Record not valid for deployment");
-        } else {
+        } catch (Exception e) {
             throw new SnowBrokerException("Failed to reach ServiceNow, see logs for details");
         }
     }

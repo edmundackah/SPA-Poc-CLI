@@ -31,7 +31,7 @@ public class DeployService {
     private final S3Util s3Util;
 
     @Autowired
-    private S3ClientFactory s3ClientFactory;
+    private final S3ClientFactory s3ClientFactory;
 
     @Autowired
     private final FileExtractorUtil fileExtractorUtil;
