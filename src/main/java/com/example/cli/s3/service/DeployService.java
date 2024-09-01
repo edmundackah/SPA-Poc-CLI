@@ -52,6 +52,9 @@ public class DeployService {
             rows.add(new TableRow(object.key(), Util.getUKTimestamp(object.lastModified()), object.size().toString()));
         }
 
+        // Sort by Key
+        rows.sort(Comparator.comparing(TableRow::getKey));
+
         // Create and print the ASCII table
         return AsciiTable.getTable(rows, Arrays.asList(
                 new Column().header("Key").with(TableRow::getKey),

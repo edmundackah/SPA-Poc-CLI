@@ -55,35 +55,4 @@ public class FileExtractorUtil {
 
         return outputDir;
     }
-
-    public File extractZip(File zipFile, File outputDir) throws IOException {
-        if (!outputDir.exists()) {
-            outputDir.mkdirs();
-        }
-
-        try (ZipFile zip = new ZipFile(zipFile)) {
-            Enumeration<? extends ZipEntry> entries = zip.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry entry = entries.nextElement();
-                File entryDestination = new File(outputDir, entry.getName());
-                if (entry.isDirectory()) {
-                    entryDestination.mkdirs();
-                } else {
-                    entryDestination.getParentFile().mkdirs();
-                    try (InputStream in = zip.getInputStream(entry);
-                         FileOutputStream out = new FileOutputStream(entryDestination)) {
-                        byte[] buffer = new byte[1024];
-                        int len;
-                        while ((len = in.read(buffer)) > 0) {
-                            out.write(buffer, 0, len);
-                        }
-                    }
-                }
-            }
-        }
-
-        return outputDir;
-    }
-
-
 }
