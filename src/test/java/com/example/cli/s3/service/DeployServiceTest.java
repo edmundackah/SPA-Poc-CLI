@@ -1,39 +1,26 @@
 package com.example.cli.s3.service;
 
 import com.example.cli.s3.enums.TargetServer;
-import com.example.cli.s3.factory.S3ClientFactory;
-import com.example.cli.s3.stubs.ArtifactoryStubs;
-import com.example.cli.s3.stubs.SnowBrokerStubs;
-import com.example.cli.s3.stubs.beans.TestS3Config;
 import com.example.cli.s3.util.BaseS3IntegrationTest;
-import com.github.tomakehurst.wiremock.stubbing.StubMapping;
-import com.robothy.s3.core.exception.BucketNotExistException;
-import com.robothy.s3.rest.LocalS3;
-import com.robothy.s3.rest.bootstrap.LocalS3Mode;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Import;
-import org.springframework.shell.test.autoconfigure.ShellTest;
-import org.springframework.test.context.ActiveProfiles;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-import static com.example.cli.s3.enums.TargetServer.*;
-import static com.github.tomakehurst.wiremock.client.WireMock.listAllStubMappings;
-import static org.awaitility.Awaitility.await;
+import static com.example.cli.s3.enums.TargetServer.AWS_S3;
+import static com.example.cli.s3.enums.TargetServer.ECS_S3;
 import static org.junit.jupiter.api.Assertions.*;
 
 class DeployServiceTest extends BaseS3IntegrationTest {

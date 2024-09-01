@@ -1,7 +1,5 @@
 package com.example.cli.s3.util;
 
-import com.example.cli.s3.factory.S3ClientFactory;
-import com.example.cli.s3.service.DeployService;
 import com.example.cli.s3.stubs.ArtifactoryStubs;
 import com.example.cli.s3.stubs.SnowBrokerStubs;
 import com.example.cli.s3.stubs.beans.TestS3Config;
@@ -10,11 +8,8 @@ import com.robothy.s3.rest.bootstrap.LocalS3Mode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
@@ -27,7 +22,6 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
-import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,8 +30,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
-
-import static com.example.cli.s3.enums.TargetServer.AWS_S3;
 
 @Slf4j
 @ShellTest
