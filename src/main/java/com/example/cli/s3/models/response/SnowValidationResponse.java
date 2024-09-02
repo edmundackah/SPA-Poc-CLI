@@ -1,4 +1,4 @@
-package com.example.cli.s3.response;
+package com.example.cli.s3.models.response;
 
 import lombok.*;
 
@@ -7,7 +7,7 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @RequiredArgsConstructor
-public class SnowBrokerValidationResponse {
+public class SnowValidationResponse {
     private S3CredentialsResponse key;
     private Boolean isValid;
 }

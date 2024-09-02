@@ -3,7 +3,7 @@ package com.example.cli.s3.stubs.beans;
 import com.example.cli.s3.client.SnowBrokerClient;
 import com.example.cli.s3.enums.TargetServer;
 import com.example.cli.s3.factory.S3ClientFactory;
-import com.example.cli.s3.response.S3CredentialsResponse;
+import com.example.cli.s3.models.response.S3CredentialsResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +45,7 @@ public class TestS3Config {
 
                 switch (server) {
                     case AWS_S3, ECS_S3:
-                        log.info("Using ES endpoint: {}", endpointUrl);
+                        log.info("Using ECS endpoint: {}", endpointUrl);
 
                         return S3Client.builder()
                             .region(Region.of(region))

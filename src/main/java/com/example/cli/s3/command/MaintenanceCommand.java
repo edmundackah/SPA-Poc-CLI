@@ -19,21 +19,21 @@ public class MaintenanceCommand {
     private final MaintenanceService maintenanceService;
 
     @Command(command = "deploy-maintenance")
-    public void deployMaintenance(@Option(required = true, description = HelpMessages.FLAGS) String flags,
+    public void deployMaintenance(@Option(description = HelpMessages.CHANGE_RECORD) String changeRecord,
+                                  @Option(required = true, description = HelpMessages.FLAGS) String flags,
+                                  @Option(description = HelpMessages.ADD_IF_MISSING) Boolean addIfMissing,
                                   @Option(required = true, description = HelpMessages.FLAG_STATE) FlagState state,
                                   @Option(required = true, description = HelpMessages.BUCKET_NAME) String bucketName,
-                                  @Option(required = true, description = HelpMessages.TARGET_SERVER) TargetServer targetServer,
-                                  @Option(description = HelpMessages.ADD_IF_MISSING) Boolean addIfMissing,
-                                  @Option(description = HelpMessages.CHANGE_RECORD) String changeRecord) {
+                                  @Option(required = true, description = HelpMessages.TARGET_SERVER) TargetServer server) {
 
-        maintenanceService.updateStates(bucketName, flags, state, addIfMissing, changeRecord, targetServer);
+        maintenanceService.updateStates(bucketName, flags, state, addIfMissing, changeRecord, server);
     }
 
     @Command(command = "verify-maintenance")
     public String verifyMaintenance(@Option(description = HelpMessages.CHANGE_RECORD) String changeRecord,
                                     @Option(required = true, description = HelpMessages.BUCKET_NAME) String bucketName,
-                                    @Option(required = true, description = HelpMessages.TARGET_SERVER) TargetServer targetServer) {
+                                    @Option(required = true, description = HelpMessages.TARGET_SERVER) TargetServer server) {
 
-        return maintenanceService.displayStates(bucketName, changeRecord, targetServer);
+        return maintenanceService.displayStates(bucketName, changeRecord, server);
     }
 }

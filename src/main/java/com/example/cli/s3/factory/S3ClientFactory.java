@@ -2,7 +2,7 @@ package com.example.cli.s3.factory;
 
 import com.example.cli.s3.client.SnowBrokerClient;
 import com.example.cli.s3.enums.TargetServer;
-import com.example.cli.s3.response.S3CredentialsResponse;
+import com.example.cli.s3.models.response.S3CredentialsResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;

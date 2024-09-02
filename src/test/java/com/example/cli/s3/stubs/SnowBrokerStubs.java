@@ -28,6 +28,32 @@ public class SnowBrokerStubs {
                                 "    \"secretKey\": \"PV59ypmisU\"\n" +
                                 "  }\n" +
                                 "}")));
+
+        //TODO: Add response body from 404 request
+        stubFor(get(urlEqualTo("/incident/INC000111"))
+                .willReturn(aResponse()
+                        .withStatus(404)
+                        .withHeader("Content-Type", "application/json")
+                        ));
+
+        stubFor(get(urlEqualTo("/change/MCR000111"))
+                .willReturn(aResponse()
+                        .withStatus(404)
+                        .withHeader("Content-Type", "application/json")
+                ));
+
+        //Code 500 response
+        stubFor(get(urlEqualTo("/change/MCR717000"))
+                .willReturn(aResponse()
+                        .withStatus(500)
+                        .withHeader("Content-Type", "application/json")
+                ));
+
+        stubFor(get(urlEqualTo("/incident/INC717000"))
+                .willReturn(aResponse()
+                        .withStatus(500)
+                        .withHeader("Content-Type", "application/json")
+                ));
     }
 
 }

@@ -1,8 +1,9 @@
 package com.example.cli.s3.client;
 
 import com.example.cli.s3.exception.SnowBrokerException;
-import com.example.cli.s3.response.S3CredentialsResponse;
-import com.example.cli.s3.response.SnowBrokerValidationResponse;
+import com.example.cli.s3.models.response.S3CredentialsResponse;
+import com.example.cli.s3.models.response.SnowValidationResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
@@ -32,28 +33,25 @@ public class SnowBrokerClient {
         String url = StringUtils.join((changeRecord.startsWith("INC") ? incidentEndpoint : changeEndpoint), changeRecord);
 
         log.info("Calling url: {}", url);
-        HttpResponse<String> res;
 
         try {
-            res = Unirest.get(url).asString();
-            log.debug("Response: {}", res.getBody());
-
-            if (res.getStatus() == 200) {
-                try {
-                    SnowBrokerValidationResponse body = objectMapper.readValue(res.getBody(), SnowBrokerValidationResponse.class);
+            HttpResponse<String> response = Unirest.get(url).asString();
+            log.debug("Response: {}", response.getBody());
+            switch (response.getStatus()) {
+                case 200:
+                    SnowValidationResponse body = objectMapper.readValue(response.getBody(), SnowValidationResponse.class);
                     if (body.getIsValid()) {
                         return body.getKey();
+                    } else {
+                        throw new SnowBrokerException("Change Record not valid for deployment");
                     }
+                case 404:
                     throw new SnowBrokerException("Change Record not valid for deployment");
-                } catch (Exception e) {
-                    throw new SnowBrokerException("Error parsing res: " + e.getMessage());
-                }
-            } else if (res.getStatus() == 404) {
-                throw new SnowBrokerException("Change Record not valid for deployment");
-            } else {
-                throw new SnowBrokerException("Failed to reach ServiceNow, see logs for details");
+                default:
+                    throw new SnowBrokerException("Failed to reach ServiceNow, see logs for details");
             }
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {
+            log.error("Something went wrong: ", e);
             throw new SnowBrokerException("Failed to reach ServiceNow, see logs for details");
         }
     }

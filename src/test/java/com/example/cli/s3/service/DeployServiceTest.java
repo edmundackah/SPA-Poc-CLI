@@ -127,9 +127,9 @@ class DeployServiceTest extends BaseS3IntegrationTest {
         assertEquals(3, testS3Client.listObjectsV2(listObjectsRequest).contents().size());
 
         List<S3Object> objects = testS3Client.listObjectsV2(listObjectsRequest).contents();
-        boolean hasControlObjects = new ArrayList<>(objects.stream()
+        boolean hasControlObjects = objects.stream()
                 .map(S3Object::key)
-                .toList()).stream()
+                .toList().stream()
                 .anyMatch((p) -> p.startsWith(prefix));
 
         assertFalse(hasControlObjects);
@@ -215,9 +215,14 @@ class DeployServiceTest extends BaseS3IntegrationTest {
         expectedKeys.forEach((key) -> assertTrue(response.contains(key)));
     }
 
-    @Test
-    public void GivenEmptyFolderPath_ShouldReturnErrorMessage() throws IOException {
-        String response = deployService.deploySnapshot("test-bucket", "p", "tomato", AWS_S3, null);
+    @ParameterizedTest
+    @CsvSource(value = {
+            "tomato",
+            "src/test/resources/empty-folder",
+    })
+    public void GivenInvalidFolderPath_ShouldReturnErrorMessage(String folderPath) throws IOException {
+        String emptyFolder = "src/test/resources/empty-folder";
+        String response = deployService.deploySnapshot("test-bucket", "p", folderPath, AWS_S3, null);
 
         assertEquals("Invalid folder path or folder is empty.", response);
     }

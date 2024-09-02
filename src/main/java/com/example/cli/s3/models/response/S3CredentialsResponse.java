@@ -1,4 +1,4 @@
-package com.example.cli.s3.response;
+package com.example.cli.s3.models.response;
 
 import lombok.*;
 
