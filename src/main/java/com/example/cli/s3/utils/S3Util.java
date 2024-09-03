@@ -1,5 +1,6 @@
 package com.example.cli.s3.utils;
 
+import com.example.cli.s3.constants.Constants;
 import com.example.cli.s3.enums.TargetServer;
 import com.example.cli.s3.factory.S3ClientFactory;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -38,7 +39,7 @@ public class S3Util {
         try {
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                     .bucket(bucketName)
-                    .key("maintenance.json")
+                    .key(Constants.MAINTENANCE_FILE)
                     .build();
 
             byte[] content = s3ClientFactory.getS3Client(server, changeRecord).getObjectAsBytes(getObjectRequest).asByteArray();

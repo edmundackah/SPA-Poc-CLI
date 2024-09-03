@@ -1,6 +1,6 @@
 package com.example.cli.s3.constants;
 
-public interface HelpMessages {
+public interface Constants {
 
     String BUCKET_NAME = "Target env (e.g. dev, staging, prod)";
     String FOLDER_PATH = "Directory containing your static assets (e.g. dist)";
@@ -13,6 +13,8 @@ public interface HelpMessages {
 
     String CHANGE_RECORD = "The change record identifier to validate.";
     String TARGET_SERVER = "The target S3 instance (e.g. ECS_S3, ECS_S3_PROD, AWS_S3 & AWS_S3_PROD)";
+
+    String MAINTENANCE_FILE = "maintenance.json";
 
     String NOT_BLANK = "must not be blank";
     String NO_TRAILING_SLASH = "Prefix must not end with a slash";

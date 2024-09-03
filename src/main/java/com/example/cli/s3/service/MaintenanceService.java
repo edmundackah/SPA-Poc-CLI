@@ -10,6 +10,7 @@ import com.github.freva.asciitable.AsciiTable;
 import com.github.freva.asciitable.Column;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,37 +24,21 @@ public class MaintenanceService {
     @Autowired
     private final S3Util s3Util;
 
-    public void updateStates(String bucketName, String flags, FlagState state,
-                             boolean addIfMissing, String changeRecord, TargetServer server) throws RuntimeException {
+    public String updateFlags(String bucketName, String flags, FlagState state,
+                              String changeRecord, TargetServer server) throws RuntimeException {
         JsonNode rootNode = s3Util.getMaintenanceFile(bucketName, server, changeRecord);
         boolean fileExists = !rootNode.isEmpty();
 
         ObjectNode rootNodeObject = (ObjectNode) rootNode;
-        Set<String> missingFlags = new HashSet<>();
         Arrays.stream(flags.split(","))
-                .forEach(flag -> {
-                    if (rootNodeObject.has(flag)) {
-                        rootNodeObject.put(flag, state.getValue());
-                    } else if (addIfMissing) {
-                        rootNodeObject.put(flag, state.getValue());
-                    } else {
-                        missingFlags.add(flag);
-                    }
-                });
-
-        if (!missingFlags.isEmpty()) {
-            log.error("The following flags were not found in the maintenance file: {}", String.join(", ", missingFlags));
-            return;
-        }
+                .forEach(flag -> rootNodeObject.put(flag, state.getValue()));
 
         s3Util.saveMaintenanceFile(bucketName, rootNode, server, changeRecord);
 
-        if (!fileExists) {
-            log.info("Successfully created the maintenance file in bucket: {}", bucketName);
-        }
+        return StringUtils.join("Successfully created the maintenance file in bucket: ", bucketName);
     }
 
-    public String displayStates(String bucketName, String changeRecord, TargetServer server) throws RuntimeException {
+    public String displayFlags(String bucketName, String changeRecord, TargetServer server) throws RuntimeException {
         JsonNode rootNode = s3Util.getMaintenanceFile(bucketName, server, changeRecord);
 
         List<MaintenanceFlag> flags = mapMaintenanceFlags(rootNode);

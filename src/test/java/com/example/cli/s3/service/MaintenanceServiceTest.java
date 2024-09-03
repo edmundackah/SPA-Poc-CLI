@@ -1,106 +1,139 @@
 package com.example.cli.s3.service;
 
+import com.example.cli.s3.constants.Constants;
 import com.example.cli.s3.enums.FlagState;
 import com.example.cli.s3.enums.TargetServer;
-import com.example.cli.s3.utils.S3Util;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import com.example.cli.s3.util.BaseS3IntegrationTest;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
-@ExtendWith(MockitoExtension.class)
-class MaintenanceServiceTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-    @Mock
-    private S3Util s3Util;
+public class MaintenanceServiceTest extends BaseS3IntegrationTest {
 
-    @InjectMocks
+    @Autowired
     private MaintenanceService maintenanceService;
 
-    @Test
-    void testUpdateStates_WhenFileExistsAndFlagsPresent() {
-        // Given
-        String bucketName = "test-bucket";
-        String flags = "flag1,flag2";
-        FlagState state = FlagState.ON;  // Use the ON enum value
-        String changeRecord = "change-record";
-        TargetServer server = TargetServer.AWS_S3; // Use the TargetServer enum
+    @ParameterizedTest
+    @CsvSource(value = {
+            "aws-bucket, null, AWS_S3",
+            "ecs-bucket, null, ECS_S3",
+            "ecs-prod-bucket, MCR18434340, ECS_S3_PROD",
+            "inc-prod-bucket, INC23434114, AWS_S3_PROD",
+    }, nullValues = {"null"})
+    public void GivenNoMaintenanceFile_ShouldRenderEmptyTable(String bucketName, String changeRecord, TargetServer server) {
+        //Create bucket
+        createBucket(testS3Client, bucketName);
 
-        ObjectNode rootNode = JsonNodeFactory.instance.objectNode();
-        rootNode.put("flag1", "off");
-        rootNode.put("flag2", "off");
+        //Get maintenance flag
+        String response = maintenanceService.displayFlags(bucketName, changeRecord, server)
+                .replaceAll("\\r\\n?", "\n"); // normalise EOL characters;
 
-        when(s3Util.getMaintenanceFile(bucketName, server, changeRecord)).thenReturn(rootNode);
+        String expected = """
+                +------+-------+
+                | Flag | State |
+                +------+-------+
+                +------+-------+""";
 
-        maintenanceService.updateStates(bucketName, flags, state, true, changeRecord, server);
-
-        assertThat(rootNode.get("flag1").asText()).isEqualTo(state.getValue());
-        assertThat(rootNode.get("flag2").asText()).isEqualTo(state.getValue());
-        verify(s3Util, times(1)).saveMaintenanceFile(bucketName, rootNode, server, changeRecord);
+        assertEquals(expected, response);
     }
 
-    @Test
-    void testUpdateStates_WhenFileDoesNotExistAndAddIfMissingTrue() {
-        String bucketName = "test-bucket";
-        String flags = "flag1,flag3";
-        FlagState state = FlagState.OFF;
-        String changeRecord = "change-record";
-        TargetServer server = TargetServer.AWS_S3_PROD;
+    @ParameterizedTest
+    @CsvSource(value = {
+            "aws-bucket, null, AWS_S3",
+            "ecs-bucket, null, ECS_S3",
+            "ecs-prod-bucket, MCR18434340, ECS_S3_PROD",
+            "inc-prod-bucket, INC23434114, AWS_S3_PROD",
+    }, nullValues = {"null"})
+    public void GivenThereIsAMaintenanceFile_ShouldRenderTable(String bucketName, String changeRecord, TargetServer server) {
+        String filePath = "src/test/resources/maintenance/maintenance.json";
 
-        ObjectNode rootNode = JsonNodeFactory.instance.objectNode();
-        rootNode.put("flag1", "on");
+        //Create bucket & Upload maintenance file
+        createBucket(testS3Client, bucketName);
+        uploadFileToS3(testS3Client, bucketName, Constants.MAINTENANCE_FILE,filePath);
 
-        when(s3Util.getMaintenanceFile(bucketName, server, changeRecord)).thenReturn(rootNode);
+        //Get maintenance flag
+        String response = maintenanceService.displayFlags(bucketName, changeRecord, server)
+                .replaceAll("\\r\\n?", "\n"); // normalise EOL characters;
 
-        maintenanceService.updateStates(bucketName, flags, state, true, changeRecord, server);
+        String expected = """
+                +------------+-------+
+                | Flag       | State |
+                +------------+-------+
+                | dummy:flag |    on |
+                +------------+-------+
+                |      test1 |    on |
+                +------------+-------+""";
 
-        assertThat(rootNode.get("flag1").asText()).isEqualTo(state.getValue());
-        assertThat(rootNode.get("flag3").asText()).isEqualTo(state.getValue());
-        verify(s3Util, times(1)).saveMaintenanceFile(bucketName, rootNode, server, changeRecord);
+        assertEquals(expected, response);
     }
 
-    @Test
-    void testUpdateStates_WhenMissingFlagsAndAddIfMissingFalse() {
-        // Given
-        String bucketName = "test-bucket";
-        String flags = "flag1,flag3";
-        FlagState state = FlagState.OFF;
-        String changeRecord = "change-record";
-        TargetServer server = TargetServer.ECS_S3; // Use the TargetServer enum
+    @ParameterizedTest
+    @CsvSource(value = {
+            "aws-bucket, 'test1,flag2', OFF, null, AWS_S3",
+            "ecs-bucket, 'test1,flag2', OFF, null, ECS_S3",
+            "ecs-prod-bucket, 'test1,flag2', OFF, MCR18434340, ECS_S3_PROD",
+            "inc-prod-bucket, 'test1,flag2', OFF, INC23434114, AWS_S3_PROD",
+    }, nullValues = {"null"})
+    public void GivenFlagUpdates_ShouldUpdateTheFlags(String bucketName, String flag, FlagState flagState,
+                                                 String changeRecord, TargetServer server) {
+        String filePath = "src/test/resources/maintenance/maintenance.json";
 
-        ObjectNode rootNode = JsonNodeFactory.instance.objectNode();
-        rootNode.put("flag1", "on");
+        //Create bucket & Upload maintenance file
+        createBucket(testS3Client, bucketName);
+        uploadFileToS3(testS3Client, bucketName, Constants.MAINTENANCE_FILE, filePath);
 
-        when(s3Util.getMaintenanceFile(bucketName, server, changeRecord)).thenReturn(rootNode);
+        //Deploy maintenance flags
+        String response = maintenanceService.updateFlags(bucketName, flag, flagState, changeRecord, server);
 
-        maintenanceService.updateStates(bucketName, flags, state, false, changeRecord, server);
+        //Check maintenance file contents
+        byte[] object = downloadObject(testS3Client, bucketName, Constants.MAINTENANCE_FILE);
+        String json = new String(Objects.requireNonNull(object), StandardCharsets.UTF_8);
+        assertEquals("{\"dummy:flag\":\"on\",\"test1\":\"off\",\"flag2\":\"off\"}", json);
 
-        assertThat(rootNode.has("flag3")).isFalse();
-        verify(s3Util, never()).saveMaintenanceFile(bucketName, rootNode, server, changeRecord);
+        String expected = StringUtils.join("Successfully created the maintenance file in bucket: ", bucketName);
+        assertEquals(expected, response);
     }
 
-    @Test
-    void testDisplayStates() {
-        String bucketName = "test-bucket";
-        String changeRecord = "change-record";
-        TargetServer server = TargetServer.ECS_S3_PROD; // Use the TargetServer enum
 
-        ObjectNode rootNode = JsonNodeFactory.instance.objectNode();
-        rootNode.put("flag1", "on");
-        rootNode.put("flag2", "off");
 
-        when(s3Util.getMaintenanceFile(bucketName, server, changeRecord)).thenReturn(rootNode);
+    @ParameterizedTest
+    @CsvSource(value = {
+            "aws-bucket, 'flag1,flag2,flag3', ON, null, AWS_S3",
+            "ecs-bucket, 'flag1,flag2,flag3', ON, null, ECS_S3",
+            "ecs-prod-bucket, 'flag1,flag2,flag3', ON, MCR18434340, ECS_S3_PROD",
+            "inc-prod-bucket, 'flag1,flag2,flag3', ON, INC23434114, AWS_S3_PROD",
+    }, nullValues = {"null"})
+    public void GivenMaintenanceFileDoesNotExist_ShouldCreateOne(String bucketName, String flag, FlagState flagState,
+                                                                 String changeRecord, TargetServer server) {
+        //Create bucket
+        createBucket(testS3Client, bucketName);
 
-        String result = maintenanceService.displayStates(bucketName, changeRecord, server);
+        //Check maintenance file is not present
+        ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
+                .bucket(bucketName)
+                .build();
 
-        assertThat(result).contains("Flag").contains("State");
-        assertThat(result).contains("flag1", "on");
-        assertThat(result).contains("flag2", "off");
+        assertEquals(0, testS3Client.listObjectsV2(listObjectsRequest).contents().size());
+
+        //Deploy maintenance flag
+        String response = maintenanceService.updateFlags(bucketName, flag, flagState, changeRecord, server);
+
+        //Check maintenance json file is created
+        assertEquals(1, testS3Client.listObjectsV2(listObjectsRequest).contents().size());
+
+        //Check maintenance file contents
+        byte[] object = downloadObject(testS3Client, bucketName, Constants.MAINTENANCE_FILE);
+        String json = new String(Objects.requireNonNull(object), StandardCharsets.UTF_8);
+        assertEquals("{\"flag1\":\"on\",\"flag2\":\"on\",\"flag3\":\"on\"}", json);
+
+        String expected = StringUtils.join("Successfully created the maintenance file in bucket: ", bucketName);
+        assertEquals(expected, response);
     }
 }

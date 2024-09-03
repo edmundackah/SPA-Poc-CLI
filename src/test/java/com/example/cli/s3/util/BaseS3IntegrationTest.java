@@ -20,7 +20,9 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.File;
@@ -74,13 +76,60 @@ public abstract class BaseS3IntegrationTest {
     }
 
     // Utility method to upload folders to S3
+    protected static void uploadFile(S3Client s3Client, String bucketName, String dir, String prefix) {
+        createBucket(s3Client, bucketName);
+        uploadDirectoryToS3(s3Client, bucketName, dir, prefix);
+    }
+
+    // Utility method to upload folders to S3
     protected static void uploadDirectory(S3Client s3Client, String bucketName, String dir, String prefix) {
         createBucket(s3Client, bucketName);
         uploadDirectoryToS3(s3Client, bucketName, dir, prefix);
     }
 
+    // Utility function to upload objects
     protected static void uploadDirectoryToExistingBucket(S3Client s3Client, String bucketName, String dir, String prefix) {
         uploadDirectoryToS3(s3Client, bucketName, dir, prefix);
+    }
+
+    // Utility function to upload single file
+    public static void uploadFileToS3(S3Client s3Client, String bucketName, String objectKey, String filePath) {
+        try {
+            // Create a PutObjectRequest
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(objectKey)
+                    .build();
+
+            // Upload the file
+            PutObjectResponse response = s3Client.putObject(putObjectRequest, RequestBody.fromFile(Paths.get(filePath)));
+
+            // Optionally, you can use the response to check the status or metadata of the uploaded object
+            log.debug("File uploaded successfully. ETag: " + response.eTag());
+
+        } catch (Exception e) {
+            log.error("Failed to upload file to S3 ", e);
+        }
+    }
+
+    protected static byte[] downloadObject(S3Client s3Client, String bucketName, String objectName) {
+        try {
+            // Create a GetObjectRequest
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(objectName)
+                    .build();
+
+            // Download the object as a byte array
+            byte[] objectBytes = s3Client.getObjectAsBytes(getObjectRequest).asByteArray();
+
+            log.debug("Object downloaded successfully as a byte array");
+            return objectBytes;
+
+        } catch (Exception e) {
+            log.error("Failed to download object from S3", e);
+            return null;
+        }
     }
 
     private S3Client getTestClient() {

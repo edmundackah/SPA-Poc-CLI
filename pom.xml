@@ -118,14 +118,12 @@
 			<version>1.12.770</version>
 			<scope>test</scope>
 		</dependency>
-
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk-core</artifactId>
 			<version>1.12.770</version>
 			<scope>test</scope>
 		</dependency>
-
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
@@ -193,6 +191,7 @@
 								<exclude>com/example/cli/s3/models/**</exclude>
 								<exclude>com/example/cli/s3/exception/**</exclude>
 								<exclude>com/example/cli/s3/constants/**</exclude>
+								<exclude>com/example/cli/s3/S3Application.java</exclude>
 							</excludes>
 						</configuration>
 					</execution>
